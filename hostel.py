@@ -1,14 +1,16 @@
 import sys
 from shutil import copyfile
-
+import subprocess
 import wx
 
 
 class Hostel(wx.Frame):
 
     def __init__(self, parent, title):
+        self.timer = None
         self.w = 700
         self.h = 600
+        self.output = None
         super(Hostel, self).__init__(parent, title=title, size=(self.w, self.h))
         self.cb = []
         try:
@@ -47,6 +49,9 @@ class Hostel(wx.Frame):
         save = wx.Button(pnl, id=i, label="Save", pos=(self.w - 10 - 100, 20 * (i + 1)))
         save.Bind(wx.EVT_BUTTON, self.save)
 
+        self.output = wx.StaticText(pnl, id=i+1, label="", pos=(50, 20 * (i + 2)))
+        self.output.SetForegroundColour((255, 0, 0))  # set text color
+
         self.Centre()
         self.Show(True)
 
@@ -65,9 +70,28 @@ class Hostel(wx.Frame):
         print(self.lines);
 
     def save(self, e):
-        with open('/etc/hosts', 'w') as f:
+        pnl = wx.Panel(self)
+
+        with open('/tmp/writehosts', 'w') as f:
             for item in self.lines:
                 print >> f, item
+        bash_command = "pkexec env DISPLAY=:0 XAUTHORITY=/run/user/1000/gdm/Xauthority cp /tmp/writehosts /etc/hosts"
+
+        error = None
+        try:
+            process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+        except OSError as e:
+            wx.MessageBox("Error while overwriting host file: "+ e.strerror, 'Error', wx.OK)
+        if error != '':
+            self.output.SetLabel('Hosts successfully saved')
+            self.timer = wx.Timer(self, 999)
+            self.Bind(wx.EVT_TIMER, self.delete)
+            self.timer.Start(3000)  # 3 second interval
+
+    def delete(self, event):
+        self.output.SetLabel('')
+
 
 ex = wx.App()
 Hostel(None, 'Hostel')
