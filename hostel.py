@@ -82,7 +82,7 @@ class Hostel(wx.Frame):
             process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
             output, error = process.communicate()
         except OSError as e:
-            wx.MessageBox("Error while overwriting host file: "+ e.strerror, 'Error', wx.OK)
+            wx.MessageBox("Error while overwriting host file: " + e.strerror, 'Error', wx.OK)
         if error != '':
             self.output.SetLabel('Hosts successfully saved')
             self.timer = wx.Timer(self, 999)
